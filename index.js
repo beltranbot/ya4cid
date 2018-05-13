@@ -37,7 +37,7 @@ for (let i = 2; i < process.argv.length - 1; i++) {
     }
 }
 
-if (!(board && ids && thread)) showError(7)
+if (!(board && thread)) showError(7)
 
 fetch({board, thread, ids})
 
@@ -51,7 +51,7 @@ async function fetch ({board, thread, ids = false}) {
         let result = await axios.get(url)
         let posts = result.data.posts
         for (const post of posts) {
-            if (ids && post.filename && ids.indexOf(post.id) != -1) {
+            if (post.filename && ((ids && ids.indexOf(post.id) != -1) || !ids)) {
                 let filename = post.tim + post.ext                
 
                 let options = {
