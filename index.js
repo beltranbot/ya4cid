@@ -39,7 +39,13 @@ for (let i = 2; i < process.argv.length - 1; i++) {
 
 if (!(board && thread)) showError(7)
 
-fetch({board, thread, ids})
+let last_thread_no = 0
+let fetch_counter = 0
+fetch({ board, thread, ids })
+setInterval(async () => {
+    console.log('fetching (', ++fetch_counter, ')')
+    await fetch({board, thread, ids})
+}, 120000)
 
 async function fetch ({board, thread, ids = false}) {
     const url = `https://a.4cdn.org/${board}/thread/${thread}.json`
@@ -51,6 +57,7 @@ async function fetch ({board, thread, ids = false}) {
         let result = await axios.get(url)
         let posts = result.data.posts
         for (const post of posts) {
+            if (post.no <= last_thread_no) continue
             if (post.filename && ((ids && ids.indexOf(post.id) != -1) || !ids)) {
                 let filename = post.tim + post.ext                
 
@@ -63,6 +70,7 @@ async function fetch ({board, thread, ids = false}) {
                 
                 await downloadIMG(options)
             }
+            last_thread_no = post.no
         }
     } catch (error) {
         console.log(error)
