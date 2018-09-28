@@ -47,19 +47,6 @@ setInterval(async () => {
     await fetch({board, thread, ids})
 }, 120000)
 
-async function does_file_exists (file_path) {
-    return await fs.open(file_path, 'r', (err, fd) => {
-        if (err) {
-            if (err.code === 'ENOENT') {
-                return false
-            } 
-        } else {
-            // file already exists
-            return true
-        }
-    })
-}
-
 async function fetch ({board, thread, ids = false}) {
     const url = `https://a.4cdn.org/${board}/thread/${thread}.json`
     let imgurl = `https://i.4cdn.org/${board}/`
@@ -73,27 +60,25 @@ async function fetch ({board, thread, ids = false}) {
             if (post.no <= last_thread_no) continue
             if (post.filename && ((ids && ids.indexOf(post.id) != -1) || !ids)) {
                 let filename = post.tim + post.ext
-                let file_path = folder + '/' + filename
+                let file_path = `${folder}/${filename}`
 
-                fs.open(file_path, 'r', async (err, fd) => {
-                    if (err) {
-                        if (err.code === 'ENOENT') {
-                            let options = {
-                                url: imgurl + filename,
-                                dest: folder
-                            }
-            
-                            console.log('Downloading: ' + filename)
-                            
-                            await downloadIMG(options)
-                        } 
-                    } else {
-                        // file already exists
-                        console.log('Skipping: ' + filename)
-                    }
-                })
+                last_thread_no = post.no
+
+                if (fs.existsSync(file_path)) {
+                    console.log(`Skipping: ${filename}`)
+                    continue
+                }
+
+                let options = {
+                    url: imgurl + filename,
+                    dest: folder
+                }
+
+                console.log(`Downloading: ${filename}`)
+                
+                await downloadIMG(options)
             }
-            last_thread_no = post.no
+            
         }
     } catch (error) {
         console.log(error)
